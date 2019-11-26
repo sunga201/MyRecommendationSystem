@@ -1,8 +1,8 @@
 import project_bias as pb
-
+import User_mode as Umod
 class Rec_Menu:
     def __init__(self):
-        self.rec = pb.Recommend_Engine_SGD()
+        self.rec = pb.Recommend_Engine_SGD.get_instance()
         self.loaded=0
         self.calculated=0
         print('-' * 5, 'music recommendation system ver 0.1', '-' * 5)
@@ -23,23 +23,7 @@ class Rec_Menu:
                 print("Please enter a vaild number. (1-3)\n")
 
     def user_mode(self):
-        if self.loaded==0 and self.calculated==0:
-            print("please load or calculate rating matrix from admin mode.\n")
-            return
-
-        while True:
-            print("\n", '-' * 5, 'user mode', '-' * 5)
-            print('1. show recommended items')
-            print('2. quit')
-            select = input('select : ')
-
-            if select == '1':
-                self.rec.recommend_item()
-            elif select == '2':
-                print()
-                return
-            else:
-                print("Please enter a vaild number. (1-2)\n")
+        um=Umod.User_Mode(self.loaded, self.calculated)
 
     def admin_mode(self):
         while True:
@@ -52,7 +36,8 @@ class Rec_Menu:
             select = input('select : ')
 
             if select == '1':
-                self.rec.train(500)
+                #self.rec.train_SGD(500)
+                self.rec.train_minibatch(500, 128)
                 self.calculated=1
 
             elif select == '2':
