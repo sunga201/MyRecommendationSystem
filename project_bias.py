@@ -6,40 +6,8 @@ import matplotlib.pyplot as plt
 from scipy.sparse.linalg import svds
 import time
 import random
+import file_preprocessor as fpp
 from sklearn.preprocessing import MinMaxScaler
-from sklearn.preprocessing import RobustScaler
-
-class Make_Rating_Matrix:
-    def __init__(self):
-        try:
-            self.data = open("Digital_Music_5.json", 'r')
-        except IOError:
-            print("file open failed!")
-            sys.exit()
-
-    def get_rating_matrix(self):
-        items={}
-        users={}
-        i=0
-        j=0
-        for line in self.data:
-            k = json.loads(line)
-            if k['asin'] not in items:
-                items[k['asin']] = i
-                i += 1
-            if k['reviewerID'] not in users:
-                users[k['reviewerID']] = j
-                j += 1
-
-        items_size = len(items)
-        users_size = len(users)
-        rating = np.zeros((items_size, users_size))
-
-        self.data.seek(0)
-        for line in self.data:
-            k = json.loads(line)
-            rating[items[k['asin']], users[k['reviewerID']]] = k['overall']
-        return rating, items, users
 
 class Make_Graph:
     def __init__(self, train_set_error, test_set_error):
@@ -58,26 +26,25 @@ class Make_Graph:
     def show_graph(self):
         plt.show()
 
-class Recommend_Engine_SGD:
-    sgd=None
+class Recommend_Engine:
     def __init__(self, lambda_q=1, lambda_pt=1, lr=0.0001):
         '''
         :param lambda_q : lambda 1, default value is 1
         :param lambda_pt : lambda 2, default value is 1
         :param lr : sgd's learning rate
 
-        matrix_row_len : row length of rating matrix, num of item
-        matrix_col_len : column length of rathing matrix, num of user
+        row_len : row length of rating matrix, num of item
+        col_len : column length of rathing matrix, num of user
         test_set : test set of rating matrix, choose 5,000 nonzero elements
         train_set : training set, replace the selected elements in the test_set with zeros
         total_mean : mean of original rating matrix's non-zero elements
         item_bias : item bias
         user_bias : user bias
         '''
-        m=Make_Rating_Matrix()
-        self.matrix, self.items, self.users=m.get_rating_matrix()
-        self.matrix_row_len=len(self.matrix)
-        self.matrix_col_len=len(self.matrix[0])
+        file_pp=fpp.File_pp.get_Instance() # json 파일을 읽어와 전처리를 수행한다.
+        self.matrix, self.items, self.users=file_pp.get_rating_matrix() # 전처리를 통해 구한 평점, item, user matrix를 리턴받는다.
+        self.row_len=len(self.matrix)
+        self.col_len=len(self.matrix[0])
         self.train_set, self.test_set = self.make_train_test()
         self.rating_matrix=np.zeros((1, 1))
         #self.mat_q, self.mat_pt=cal_SVD(self.train_set)
@@ -88,13 +55,13 @@ class Recommend_Engine_SGD:
         self.test_set_error=[]
         self.trained=0 # if rating matrix is trained, variable trained turns to 1.
         self.loaded=0 # if admin load rating matrix, variable loaded turns to 1.
-        
         self.load_SVD()
 
+    re=None
     def get_instance(lambda_q=1, lambda_pt=1, lr=0.0001):
-        if Recommend_Engine_SGD.sgd==None:
-            Recommend_Engine_SGD.sgd=Recommend_Engine_SGD(lambda_q, lambda_pt, lr)
-        return Recommend_Engine_SGD.sgd
+        if Recommend_Engine.re==None:
+            Recommend_Engine.re=Recommend_Engine(lambda_q, lambda_pt, lr)
+        return Recommend_Engine.re
         
     # cal_SVD() : Perform SVD with original rating matrix and save the results.
     def cal_SVD(self):
@@ -129,13 +96,13 @@ class Recommend_Engine_SGD:
 
     # get_bias() : Returns item bias, user bias
     def get_bias(self):
-        i_bias=np.zeros(self.matrix_row_len)
-        u_bias=np.zeros(self.matrix_col_len)
+        i_bias=np.zeros(self.row_len)
+        u_bias=np.zeros(self.col_len)
 
-        for idx in range(self.matrix_row_len):
+        for idx in range(self.row_len):
             i_bias[idx]=np.mean(self.matrix[idx, self.matrix[idx, :].nonzero()])-self.total_mean
 
-        for idx in range(self.matrix_col_len):
+        for idx in range(self.col_len):
             u_bias[idx] = np.mean(self.matrix[self.matrix[:, idx].nonzero(), idx])-self.total_mean
         return i_bias, u_bias
 
@@ -151,12 +118,13 @@ class Recommend_Engine_SGD:
 
     #make_train_test() : 주어진 평점 행렬에서 train set과 test set을 분리한다.
     def make_train_test(self):
-        np.random.seed(0)
+        #np.random.seed(0)
         train_set=self.matrix.copy()
         test_set=np.zeros(self.matrix.shape)
 
         nonzero_row, nonzero_col=self.get_nonzero(train_set)
-        idx_list=np.random.choice(range(len(nonzero_row)), 5000, replace=False) # num of test set : 5000
+        test_set_num=1000
+        idx_list=np.random.choice(range(len(nonzero_row)), test_set_num, replace=False) # test_set_num을 통해 test set에 들어갈 원소 수를 정해준다.
         for idx in idx_list:
            test_set[nonzero_row[idx], nonzero_col[idx]]=train_set[nonzero_row[idx], nonzero_col[idx]]
            train_set[nonzero_row[idx], nonzero_col[idx]]=0
@@ -181,6 +149,7 @@ class Recommend_Engine_SGD:
             np.random.shuffle(nonzero_list)
             print("iter ", i)
             chk=1
+
             for idx in range(len(nonzero_row)):
                 row=nonzero_list[idx][0] # Row number of nonzero element in train set.
                 col=nonzero_list[idx][1] # Column number of nonzero element in train set.
@@ -282,6 +251,7 @@ class Recommend_Engine_SGD:
                 print("train finished!")
                 print('-'*5, 'reult matrix','-'*5)
                 self.rating_matrix=self.get_final_matrix()
+                #self.rating_matrix=self.rescaling(self.rating_matrix)
                 print(self.rating_matrix)
                 np.save('rating_matrix.npy', self.rating_matrix)
                 np.save('train_set_error.npy', self.train_set_error)
@@ -302,26 +272,37 @@ class Recommend_Engine_SGD:
     # get_final_matrix() : Return learning matrix.
     def get_final_matrix(self):
         tmp=np.full(self.matrix.shape, self.total_mean)
-        for i in range(self.matrix_col_len):
+        for i in range(self.col_len):
             tmp[:, i]+=self.item_bias
 
-        for i in range(self.matrix_row_len):
+        for i in range(self.row_len):
             tmp[i, :]+=self.user_bias
 
         tmp+=np.dot(self.mat_q, self.mat_pt)
         return tmp
 
+    def rescaling(self, matrix):
+        recover_matrix=np.zeros(self.rating_matrix.shape) # 초기에 존재하던 평점정보들을 백업해둔다.
+        copy_matrix=self.rating_matrix
+        nonzero_row, nonzero_col=self.get_nonzero(self.matrix)
+        for i in range(len(nonzero_row)): # 예측 평점 행렬에서 초기 평점정보들은 0으로 하고 이 값들을 recover_matrix에 백업해둔다.
+            recover_matrix[nonzero_row[i], nonzero_col[i]] = copy_matrix[nonzero_row[i], nonzero_col[i]]
+            copy_matrix[nonzero_row[i], nonzero_col[i]] = 0
+
+        max=copy_matrix.max()
+        min=copy_matrix.min()
+        denom=max-min
+        copy_matrix=((copy_matrix-min)/denom)*4+1 #값의 범위를 1~5로 스케일링
+        for i in range(len(nonzero_row)): # 백업해뒀던 초기 평점정보들을 복원한다.
+            copy_matrix[nonzero_row[i], nonzero_col[i]] = recover_matrix[nonzero_row[i], nonzero_col[i]]
+        return copy_matrix
+
     #load_rating_matrix() : load rating matrix, train set error, test set error and store them in each variables.
     def load_rating_matrix(self):
         self.rating_matrix=np.load('rating_matrix.npy')
-        scaler=MinMaxScaler(feature_range=(1, 5))
-        a=scaler.fit_transform(self.rating_matrix)
-        print(self.rating_matrix)
-        print('\n\n')
-        print(a)
         self.train_set_error=list(np.load('train_set_error.npy'))
         self.test_set_error=list(np.load('test_set_error.npy'))
-
+        self.rating_matrix = self.rescaling(self.rating_matrix)
         if len(self.rating_matrix) > 1:
             self.loaded=1
             return True
