@@ -3,42 +3,64 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from collections import defaultdict
 import numpy as np
 import json
-extend_stopWords=['disc', 'feel', 'relax', 'track', 'lyrics', 'got', 'favorate', 'listen', '34', '8217', 'think', 'song', 'songs', 'cd', 'album', 'quot', 'music', 'amazon', 'good', 'great', 'words', 'sound', 'really', 'best', 'like', 'just', 'man', 'love', 'said']
+import file_preprocessor as fpp
+import time
+import pickle
+extend_stopWords=['theyre', 'ive', 'buy', 'people', 'wrong', 'greatest', 'laid', 'long', 'minute', 'singing', 'time', 'definitely', 'dont', 'song', 'songs', 'cd', 'album', 'day', 'version', 'albums', 'singer', 'disc', 'feel', 'relax', 'track', 'lyrics', 'got', 'favorate', 'listen', '34', '8217', 'think', 'quot', 'music', 'amazon', 'good', 'great', 'words', 'sound', 'really', 'best', 'like', 'just', 'man', 'love', 'said']
 stopWords=list(stop_words.ENGLISH_STOP_WORDS)+extend_stopWords
-try:
-    data=open("Digital_Music_5.json", 'r')
-except IOError:
-    print("file open failed!")
-    sys.exit()
 
-reviews={}
-for line in data:
-    k = json.loads(line)
-    if k['asin'] not in reviews:
-        reviews[k['asin']]=[]
-    reviews[k['asin']].append(k['reviewText'])
+class Tf_Idf:
+    def __init__(self):
+        file_pp=fpp.File_pp.get_Instance()
+        self.reviews=file_pp.get_review_matrix()
+        self.tfidf_list=[]
 
-def tfidf(itemID, showNum=99999):
-    test=reviews[itemID] #이이템 별 리뷰들을 모아둔다.
-    tfidf=TfidfVectorizer(stop_words=stopWords).fit(test)
-    testArray=tfidf.transform(test).toarray()
-    result=np.zeros(len(testArray[0]))
+    def tfidf(self, itemID, show_num=99999):
+        test=self.reviews[itemID] #이이템 별 리뷰들을 모아둔다.
+        try:
+            tfidf=TfidfVectorizer(stop_words=stopWords, min_df=0.3, max_df=0.5).fit(test)
+        except:
+            tfidf = TfidfVectorizer(stop_words=stopWords).fit(test)
+        testArray=tfidf.transform(test).toarray()
+        result=np.zeros(len(testArray[0]))
+    
+        for list in testArray:
+            result+=list
+    
+        result/=len(testArray)
+        result_with_idx=[]
+    
+        keyList={}
+        for k, v in tfidf.vocabulary_.items():
+            keyList[v]=k
+    
+        for i in range(len(testArray[0])):
+            result_with_idx.append((result[i], keyList[i]))
+    
+        result_with_idx.sort(reverse=True)
+        ret=[]
+        for i in range(min(len(result_with_idx), show_num)):
+            if result_with_idx[i][0]>0:
+                ret.append([result_with_idx[i][1], result_with_idx[i][0]])
+        return ret
 
-    for list in testArray:
-        result+=list
+    def tfidf_all(self, item_list, show_num=99999):
+        try: #tfidf 값을 저장한 리스트 파일이 존재할 경우
+            with open('tfidf_list.txt', 'rb') as f:
+                self.tfidf_list=pickle.load(f)
+            print('loading TF-IDF values...')
 
-    result/=len(testArray)
-    resultWithIdx=[]
+        except: #tfidf 값을 저장한 리스트 파일이 존재하지 않을 경우
+            print('calculating TF-IDF values...')
+            for item in item_list:
+                self.tfidf_list.append([item, self.tfidf(item, show_num)])
+            with open('tfidf_list.txt', 'wb') as f:
+                pickle.dump(self.tfidf_list, f)
 
-    keyList={}
-    for k, v in tfidf.vocabulary_.items():
-        keyList[v]=k
-
-    for i in range(len(testArray[0])):
-        resultWithIdx.append((result[i], keyList[i]))
-
-    resultWithIdx.sort(reverse=True)
-    ret=[]
-    for i in range(min(len(resultWithIdx), showNum)):
-        ret.append(resultWithIdx[i][1])
-    return ret
+    def get_tfidf(self, item, show_num):
+        ret=[]
+        for element in self.tfidf_list:
+            if element[0]==item:
+                for i in range(min(len(element[1]), show_num)):
+                    ret.append(element[1][i][0])
+                return ret
