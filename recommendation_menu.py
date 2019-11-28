@@ -1,8 +1,15 @@
 import project_bias as pb
 import User_mode as Umod
+import file_preprocessor as fpp
+import TF_IDF
+
 class Rec_Menu:
     def __init__(self):
-        self.rec = pb.Recommend_Engine_SGD.get_instance()
+        fpp.File_pp.get_Instance()
+        self.tf_idf=TF_IDF.Tf_Idf()
+        self.rec = pb.Recommend_Engine.get_instance()
+        _, _, self.items, _=self.rec.get_matrices()
+        self.tf_idf.tfidf_all(self.items.keys())  # 모든 item의 TF-IDF 값을 미리 계산해둔다.
         self.loaded=0
         self.calculated=0
         print('-' * 5, 'music recommendation system ver 0.1', '-' * 5)
@@ -23,7 +30,7 @@ class Rec_Menu:
                 print("Please enter a vaild number. (1-3)\n")
 
     def user_mode(self):
-        um=Umod.User_Mode(self.loaded, self.calculated)
+        um=Umod.User_Mode(self.loaded, self.calculated, self.tf_idf)
 
     def admin_mode(self):
         while True:
