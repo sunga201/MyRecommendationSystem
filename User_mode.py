@@ -3,12 +3,12 @@ import TF_IDF
 import time
 
 class User_Mode:
-    def __init__(self, loaded, calculated, tf_idf):
+    def __init__(self, loaded, calculated, tf_idf, rec):
         self.rec_list=[]
         self.loaded=loaded
         self.calculated=calculated
-        self.rs=pb.Recommend_Engine.get_instance()
-        self.rating_matrix, self.matrix, self.items, self.users=self.rs.get_matrices()
+        self.rec=rec # 학습과 관련된 메소드들이 모여있는 클래스
+        self.rating_matrix, self.matrix, self.items, self.users=self.rec.get_matrices()
         self.num=0
         self.recommended=False
         start=time.time()
@@ -54,7 +54,7 @@ class User_Mode:
 
     def show_recommand_music(self):
         user_idx = self.users[self.userID]  # Get user index
-        nonzero_row, nonzero_col = self.rs.get_nonzero(self.rs.get_matrix())  # 기존에 존재하던 평점들의 인덱스를 저장한다.
+        nonzero_row, nonzero_col = self.rec.get_nonzero(self.rec.get_matrix())  # 기존에 존재하던 평점들의 인덱스를 저장한다.
         item_idx = []
 
         for i in range(len(nonzero_col)):
@@ -103,17 +103,20 @@ class User_Mode:
         for item in removed_list:
             row=self.items[item[0]] # 예측 평점 행렬에서 해당 아이템의 번호
             col=self.users[self.userID] # 예측 평점 행렬에서 사용자의 번호
-            self.rating_matrix[row][col]=0 # 사용자가 선호하지 않는다고 말한 항목들은 평점을 0으로 한다.
+            print('삭제 전 : ', self.rating_matrix[row, col])
+            self.rating_matrix, self.test_set=self.rec.partial_training(row, col, 0) # row 번째 아이템에 대해 col번째 사용자가 매긴 평점을 0으로 한다.
             self.rec_list.remove(item)
+            print('삭제 후 : ', self.rating_matrix[row, col], '목표 : ', self.test_set[row, col])
 
         #self.get_similar_items(row)
 
         print(' '*10, '다음 아이템들이 추천 목록에서 삭제되었습니다.', ' '*10)
         
-        self.show_recommand_music()
+        '''self.show_recommand_music()'''
         
 
         return
 
-    '''def get_similar_items(self, item_idx):'''
+    '''def get_similar_items(self, item_idx):
+        for i in range(len())'''
         

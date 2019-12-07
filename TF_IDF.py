@@ -6,7 +6,7 @@ import json
 import file_preprocessor as fpp
 import time
 import pickle
-extend_stopWords=['theyre', 'ive', 'buy', 'people', 'wrong', 'greatest', 'laid', 'long', 'minute', 'singing', 'time', 'definitely', 'dont', 'song', 'songs', 'cd', 'album', 'day', 'version', 'albums', 'singer', 'disc', 'feel', 'relax', 'track', 'lyrics', 'got', 'favorate', 'listen', '34', '8217', 'think', 'quot', 'music', 'amazon', 'good', 'great', 'words', 'sound', 'really', 'best', 'like', 'just', 'man', 'love', 'said']
+extend_stopWords=['did', 'theyre', 'ive', 'buy', 'people', 'wrong', 'greatest', 'laid', 'long', 'minute', 'singing', 'time', 'definitely', 'dont', 'song', 'songs', 'cd', 'album', 'day', 'version', 'albums', 'singer', 'disc', 'feel', 'relax', 'track', 'lyrics', 'got', 'favorate', 'listen', '34', '8217', 'think', 'quot', 'music', 'amazon', 'good', 'great', 'words', 'sound', 'really', 'best', 'like', 'just', 'man', 'love', 'said']
 stopWords=list(stop_words.ENGLISH_STOP_WORDS)+extend_stopWords
 
 class Tf_Idf:
@@ -18,7 +18,7 @@ class Tf_Idf:
     def tfidf(self, itemID, show_num=99999):
         test=self.reviews[itemID] #이이템 별 리뷰들을 모아둔다.
         try:
-            tfidf=TfidfVectorizer(stop_words=stopWords, min_df=0.3, max_df=0.5).fit(test)
+            tfidf=TfidfVectorizer(stop_words=stopWords, min_df=2).fit(test)
         except:
             tfidf = TfidfVectorizer(stop_words=stopWords).fit(test)
         testArray=tfidf.transform(test).toarray()
