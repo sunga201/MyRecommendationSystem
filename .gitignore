@@ -1,0 +1,16 @@
+# pycharm 관련 파일
+.idea/
+코드/.idea/
+
+#전처리 파일
+코드/initial_matrix.npy
+코드/rating_matrix.np.npy
+코드/rating_matrix.npy
+코드/SVD_PT.npy
+코드/SVD_Q.npy
+코드/test_set.npy
+코드/test_set_error.npy
+코드/train_set.npy
+
+#python cache
+코드/__pycache__/
