@@ -11,6 +11,7 @@
 코드/test_set.npy
 코드/test_set_error.npy
 코드/train_set.npy
+코드/tfidf_list.txt
 
 #python cache
 코드/__pycache__/
