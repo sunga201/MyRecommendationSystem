@@ -1,10 +1,7 @@
 from sklearn.feature_extraction import stop_words
 from sklearn.feature_extraction.text import TfidfVectorizer
-from collections import defaultdict
 import numpy as np
-import json
 import file_preprocessor as fpp
-import time
 import pickle
 extend_stopWords=['quite', 'voice', 'did', 'sings', 'truly', 'theres', 'im', 'recording', 'recodings', 'collection', 'work', 'voice', 'did', 'theyre', 'ive', 'buy', 'people', 'wrong', 'greatest', 'laid', 'long', 'minute', 'singing', 'time', 'definitely', 'dont', 'song', 'songs', 'cd', 'album', 'day', 'version', 'albums', 'singer', 'disc', 'feel', 'relax', 'track', 'lyrics', 'got', 'favorate', 'listen', '34', '8217', 'think', 'quot', 'music', 'amazon', 'good', 'great', 'words', 'sound', 'really', 'best', 'like', 'just', 'man', 'love', 'said']
 stopWords=list(stop_words.ENGLISH_STOP_WORDS)+extend_stopWords
