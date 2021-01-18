@@ -89,7 +89,7 @@ class Rec_Menu:
             elif select=='5': #저장되어 있는 초기 평점 행렬을 제거한다. 추천 목록에서 특정 항목을 제거함으로써 변화한
                               # 초기 평점을 초기화하기 위해 사용
                 try:
-                    os.remove('initial_matrix.npy')
+                    os.remove('./initial_matrix.npy')
                 except:
                     print('파일이 존재하지 않습니다.')
 

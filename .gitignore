@@ -16,4 +16,5 @@
 #python cache
 코드/__pycache__/
 
-*.txt
+아쉬웠던 점.txt
+코드/tfidf_list.txt
