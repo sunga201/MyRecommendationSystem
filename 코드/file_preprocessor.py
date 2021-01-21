@@ -3,24 +3,29 @@ import numpy as np
 import sys
 
 class File_pp:
-    pp=None
+    # 싱글톤 패턴
+    def __new__(cls, *args, **kwargs):
+        if not hasattr(cls, "_instance"): # _instance 속성이 없다면
+            print("init new called!")
+            cls._instance = super().__new__(cls) # File_pp 클래스 객체 생성
+        return cls._instance # File_pp._instance 리턴
+
     def __init__(self):
-        try:
-            self.data = open("./reviewData/Digital_Music_5.json", 'r')
-        except IOError:
-            print("file open failed!")
-            sys.exit()
-            
-        self.items={}
-        self.users={}
-        self.reviews={}
-        self.rating=None
-        self.cal_rating_review_matrix()
-        
-    def get_Instance():
-        if File_pp.pp==None:
-            File_pp.pp=File_pp()
-        return File_pp.pp
+        cls=type(self)
+        if not hasattr(cls, "_init"):
+            print("init init called!")
+            try:
+                self.data = open("./reviewData/Digital_Music_5.json", 'r')
+            except IOError:
+                print("file open failed!")
+                sys.exit()
+
+            self.items={}
+            self.users={}
+            self.reviews={}
+            self.rating=None
+            self.cal_rating_review_matrix()
+            cls._init=True
     
     def cal_rating_review_matrix(self):
         i=0
