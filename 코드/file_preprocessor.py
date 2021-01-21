@@ -1,5 +1,6 @@
 import json
 import numpy as np
+import sys
 
 class File_pp:
     pp=None
@@ -65,26 +66,3 @@ class File_pp:
 
     def get_cosine_similarity(self, a, b): #a와 b에는 평점 행렬에서 각 아이템 a와 b가 받은 평점들을 가진 리스트가 들어온다.
         return np.dot(a, b)/(np.linalg.norm(a)*np.linalg.norm(b))
-
-    def cal_item_similarity(self):
-        sim_matrix=np.array([[0]*len(self.items)*5], dtype=list).reshape(3568, 5) # 3568 X 5 크기의 배열에 item similarity 정보 저장
-        for i in range(len(self.items)):
-            print('i : ', i)
-            tmp_list=[]
-            for j in range(len(self.items)):
-                if i==j: tmp_list.append(np.zeros(len(self.items)))
-                else:
-                    sim=self.get_cosine_similarity(self.rating[i, :], self.rating[j, :])
-                    tmp_list.append((j, sim))
-            tmp_list.sort(key=lambda x : x[1], reverse=True)
-            sim_matrix[i]=tmp_list[:5]
-        np.save('sim_matrix.npy', sim_matrix)
-        return sim_matrix
-
-    def get_item_similarity(self):
-        sim_matrix=[]
-        try:
-            sim_matrix=np.load('sim_matrix.npy', allow_pickle=True)
-        except IOError:
-            sim_matrix=self.cal_item_similarity()
-        return sim_matrix
