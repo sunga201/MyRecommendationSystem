@@ -7,9 +7,9 @@ import os
 class Rec_Menu:
     def __init__(self):
         print('파일 전처리 진행중...')
-        self.fpp=fpp.File_pp.get_Instance() # 데이터 전처리 수행
+        self.fpp=fpp.File_pp() # 데이터 전처리 수행
         self.tf_idf=TF_IDF.Tf_Idf()
-        self.rec = calSGD.Recommend_Engine.get_instance(lr=0.0002)
+        self.rec = calSGD.Recommend_Engine(lr=0.0002)
         self.calculated=False
         self.loaded=self.load_rating_matrix()
         if not self.loaded:

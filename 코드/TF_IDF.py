@@ -8,7 +8,7 @@ stopWords=list(stop_words.ENGLISH_STOP_WORDS)+extend_stopWords
 
 class Tf_Idf:
     def __init__(self):
-        file_pp=fpp.File_pp.get_Instance()
+        file_pp=fpp.File_pp()
         self.reviews=file_pp.get_review_matrix()
         self.tfidf_list=[]
 
